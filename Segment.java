@@ -13,6 +13,20 @@ public class Segment implements Comparable<Segment>{
 		this.index = index;
 	}
 
+	float getYgivenX(float x){
+		//Get y value at a given x value using equation of the segment in interest.
+		Vctr3D pointA = segment.getStart();
+		Vctr3D pointB = segment.get(0);
+		
+		float slope = (pointA.y - pointB.y) / (pointA.x - pointB.x);
+		
+		float intercept = pointA.y - (slope*pointA.x);
+		
+		float Y = (slope * x) + intercept;
+		
+		return Y;
+	}
+	
 	@Override
 	public int compareTo(Segment o) {
 		if(endpoint.x == o.endpoint.x){

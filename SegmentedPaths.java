@@ -13,6 +13,7 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 
+@SuppressWarnings("unused")
 public class SegmentedPaths {
     private ArrayList<SegmentedPath> paths = new ArrayList<SegmentedPath>();
 
@@ -139,6 +140,40 @@ public class SegmentedPaths {
         return offsetPaths;
     }
     
+    void intersectionPoints(Segment a, Segment b, PriorityQueue<Segment> c){
+
+		// Compare segment (pointA1, pointA2) with (pointB1,pointB2) for an intersection
+		Vctr3D pointA1 = a.segment.getStart();
+		Vctr3D pointA2 = a.segment.get(0);
+		Vctr3D pointB1 = b.segment.getStart();
+		Vctr3D pointB2 = b.segment.get(0);
+		
+        float [] intersect = pointA1.getIntersect2D(pointA2, pointB1, pointB2);
+        if ( intersect != null ) {
+            // Remove intersections between offset segments
+        	
+        	int count1 = paths.size(); //Before new segments are created
+            offsetStage2_processIntersection( intersect, a.index, b.index );
+            int count2 = paths.size(); //After new segments are created
+            
+            for(int i = count1; i < count2; i++){ //Add these new segments back to event queue
+            	SegmentedPath path = paths.get(i);
+            	
+            	Segment s1 = new Segment(path, path.getStart(), true, i);
+                Segment s2 = new Segment(path, path.get(0), false, i);
+                
+            	if(path.getStart().x >= path.get(0).x){
+            		s1 = new Segment(path, path.get(0), true, i);
+                	s2 = new Segment(path, path.getStart(), false, i);
+            	}
+
+            	c.add(s1);
+            	c.add(s2);
+            }
+            // NOTE, offsetStage2_processIntersection() WILL ADD SEGMENTS TO this.paths
+        }
+    }
+    
     void offsetStage2() { // Find and remove intersections between offset segments
         
         // Break up paths into individual segments.
@@ -166,40 +201,38 @@ public class SegmentedPaths {
         
         
         
-        
 
         // INDIVIDUAL ASSIGNMENT TARGET ZONE START ****************************************************************************
-        /*
-        //Sorting class for Segment type
+        
         class SegmentSort implements Comparator<Segment>{
 
-			@Override
-			public int compare(Segment arg0, Segment arg1) {
-				if(arg0.endpoint.x == arg1.endpoint.x){
-					if(arg0.endpoint.y < arg1.endpoint.y){
-						return -1;
-					}
-					else if(arg0.endpoint.y > arg1.endpoint.y){
-						return 1;
-					}
-					else{
-						return 0;
-					}
-				}
-				else if (arg0.endpoint.x < arg1.endpoint.x){
-					return -1;
-				}
-				else{
-					return 1;
-				}
-			}
-        	
+        	@Override
+        	public int compare(Segment arg0, Segment arg1) {
+        		if(arg0.endpoint.x == arg1.endpoint.x){
+        			if(arg0.endpoint.y < arg1.endpoint.y){
+        				return -1;
+        			}
+        			else if(arg0.endpoint.y > arg1.endpoint.y){
+        				return 1;
+        			}
+        			else{
+        				return 0;
+        			}
+        		}
+        		else if (arg0.endpoint.x < arg1.endpoint.x){
+        			return -1;
+        		}
+        		else{
+        			return 1;
+        		}
+        	}
         }
+          
         
         //Breaking up the segments into two parts: the left endpoint and right endpoint.
         //Initialize event queue of these endpoints.
         //Sort all endpoints by x from left to right(ascending). Break ties by comparing y values from bottom to up.
-        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(2 * paths.size(), new SegmentSort());
+        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(2*paths.size(), new SegmentSort());
         
         for(int i = 0; i < paths.size(); i++){
         	SegmentedPath path = paths.get(i);
@@ -217,49 +250,40 @@ public class SegmentedPaths {
         }
         
         //Create list of active segments that are to be compared to each other.
+        //We are in fact storing the starting point of a segment, but this works just as well.
         ArrayList<Segment> activeSegments = new ArrayList<Segment>(paths.size());
         
         for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
         	if(endpoint.isLeft){ //Start of segment
         		activeSegments.add(endpoint);
-
-        		for(Segment other : activeSegments){        			
-        			if(endpoint.segment != other.segment){
-		
-        				// Compare segment (pointA1, pointA2) with (pointB1,pointB2) for an intersection
-        				Vctr3D pointA1 = endpoint.segment.getStart();
-        				Vctr3D pointA2 = endpoint.segment.get(0);
-        				Vctr3D pointB1 = other.segment.getStart();
-        				Vctr3D pointB2 = other.segment.get(0);
-        				
-                        float [] intersect = pointA1.getIntersect2D(pointA2, pointB1, pointB2);
-                        if ( intersect != null ) {
-                            // Remove intersections between offset segments
-                        	
-                        	int count1 = paths.size(); //Before new segments are created
-                            offsetStage2_processIntersection( intersect, endpoint.index, other.index );
-                            int count2 = paths.size(); //After new segments are created
-                            
-                            for(int i = count1; i < count2; i++){ //Add these new segments back to event queue
-                            	SegmentedPath path = paths.get(i);
-                            	
-                            	Segment s1 = new Segment(path, path.getStart(), true, i);
-                                Segment s2 = new Segment(path, path.get(0), false, i);
-                                
-                            	if(path.getStart().x >= path.get(0).x){
-                            		s1 = new Segment(path, path.get(0), true, i);
-                                	s2 = new Segment(path, path.getStart(), false, i);
-                            	}
-
-                            	sort_segments.add(s1);
-                            	sort_segments.add(s2);
-                            }
-                            // NOTE, offsetStage2_processIntersection() WILL ADD SEGMENTS TO this.paths
-                        }
-        			}
-        			
-        			
+        		Collections.sort(activeSegments, new SweepLineComparator(paths, endpoint.endpoint.x)); //sort by y at given x
+        		
+        		int top = 0;
+        		int bottom = 0;
+        		int index = activeSegments.indexOf(endpoint);
+        		
+        		if(activeSegments.size() == 1){ //No other active segment to compare to.
+        			continue;
         		}
+        		else if(index == 0){ //If current segment is at the top, only need to compare it to the bottom.
+        			bottom = index + 1;
+        			Segment bottom_point = activeSegments.get(bottom);
+        			intersectionPoints(endpoint, bottom_point, sort_segments);
+        		}
+        		else if(index == activeSegments.size()-1){ //If current segment is at the bottom, etc.
+        			top = index - 1;
+        			Segment top_point = activeSegments.get(top);
+        			intersectionPoints(endpoint, top_point, sort_segments);
+        		}
+        		else{ //Compare to both top and bottom.
+        			top = index - 1;
+        			bottom = index + 1;
+        			Segment top_point = activeSegments.get(top);
+        			Segment bottom_point = activeSegments.get(bottom);
+        			intersectionPoints(endpoint, top_point, sort_segments);
+        			intersectionPoints(endpoint, bottom_point, sort_segments);
+        		}
+        		
         	}
         	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
         		
@@ -271,7 +295,7 @@ public class SegmentedPaths {
         		}
         	}
         }  
-        */
+
         // INDIVIDUAL ASSIGNMENT TARGET ZONE END ******************************************************************************
 
         
@@ -282,7 +306,7 @@ public class SegmentedPaths {
         
         
         
-
+/*
         // Iterate through all the segments (that is the first two loops)
         
         for ( int iPathA = 0; iPathA < paths.size(); iPathA++ ) {
@@ -305,7 +329,7 @@ public class SegmentedPaths {
                 }
             }
         }
-  
+  */
         
         // Remove segments that need to be deleted
         for ( int iPath = 0; iPath < paths.size(); iPath++ ) {
