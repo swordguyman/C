@@ -170,7 +170,6 @@ public class SegmentedPaths {
             	c.add(s1);
             	c.add(s2);
             }
-            // NOTE, offsetStage2_processIntersection() WILL ADD SEGMENTS TO this.paths
         }
     }
     
@@ -192,14 +191,6 @@ public class SegmentedPaths {
             }
         }
         paths = newPaths.paths;
-        
-
-
-        
-      
-        
-        
-        
         
 
         // INDIVIDUAL ASSIGNMENT TARGET ZONE START ****************************************************************************
@@ -232,7 +223,7 @@ public class SegmentedPaths {
         //Breaking up the segments into two parts: the left endpoint and right endpoint.
         //Initialize event queue of these endpoints.
         //Sort all endpoints by x from left to right(ascending). Break ties by comparing y values from bottom to up.
-        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(2*paths.size(), new SegmentSort());
+        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(paths.size(), new SegmentSort());
         
         for(int i = 0; i < paths.size(); i++){
         	SegmentedPath path = paths.get(i);
@@ -251,12 +242,12 @@ public class SegmentedPaths {
         
         //Create list of active segments that are to be compared to each other.
         //We are in fact storing the starting point of a segment, but this works just as well.
-        ArrayList<Segment> activeSegments = new ArrayList<Segment>(paths.size());
+        ArrayList<Segment> activeSegments = new ArrayList<>(paths.size());
         
         for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
         	if(endpoint.isLeft){ //Start of segment
         		activeSegments.add(endpoint);
-        		Collections.sort(activeSegments, new SweepLineComparator(paths, endpoint.endpoint.x)); //sort by y at given x
+        		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x
         		
         		int top = 0;
         		int bottom = 0;

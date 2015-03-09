@@ -7,18 +7,17 @@ public class SweepLineComparator implements Comparator<Segment>{
 	//this class sorts the points so we can use them for the more efficient sweep line (check only above and below)
 	ArrayList<SegmentedPath> paths; //so we can compute slopes...only use in worst case!
 	
-	float x; //Point at which the leftmost point of a segment is found and the sweep line is currently at.
-	
-	public SweepLineComparator(ArrayList<SegmentedPath> allpaths, float x){
+	public SweepLineComparator(ArrayList<SegmentedPath> allpaths){
 		paths = allpaths;
-		this.x = x;
 	}
 	
 	
 	public int compare(Segment a, Segment b){
 		//Idea is to get the y values where the sweep line is at this.x so we can sort activeSegments accordingly.
-		float current_y = a.getYgivenX(x);
-		float other_y = b.getYgivenX(x); 
+		float current_y = a.endpoint.y;
+		//a.getYgivenX(x);
+		float other_y = b.endpoint.y;
+		//getYgivenX(x); 
 		
 		if(current_y == other_y){
 			//we're in trouble. this is why we include paths - sort by slope. 
