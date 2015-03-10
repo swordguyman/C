@@ -394,7 +394,6 @@ public class SegmentedPaths {
     void offsetStage3(SegmentedPaths offsetPaths, float offset) { 
         
         float distThreshold = (1-0.001f)*offset - 0.00001f;
-        
         PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort()); //this sorts by X
         
         //now declare the four sets we will use to check against; we will add to these while we add to the priorityqueue
@@ -458,60 +457,28 @@ public class SegmentedPaths {
         			if(bigBlues.size() > 0 && smallBlues.size() > 0){
         				//if they're both non-empty, that means we might have an intersection
         				//so do an intersection
-//    			        for ( SegmentedPath pathA  : paths ) {
-//    		            Vctr3D pointA1 = pathA.getStart();
-//    		            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
-//    		                Vctr3D pointA2 = pathA.get(iSegmentA);
-    		//
-    		//
-//    		                // For each segment of the outer loop (path), iterate through all segments of offset paths
-//    		                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
-//    		                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
-//    		                    Vctr3D pointB1 = pathB.getStart();
-//    		                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
-//    		                        Vctr3D pointB2 = pathB.get(iSegmentB);
-    		//
-    		//
-//    		                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
-//    		                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
-//    		                        if ( distance < distThreshold ) { 
-//    		                            // Remove segment in the offset paths
-//    		                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
-//    		                            pathB.removeLast();
-//    		                            offsetPaths.addPath(pathSecondPartB);
-//    		                        }
-    		//
-    		//
-//    		                        pointB1 = pointB2;
-//    		                    }
-//    		                }
-    		//
-    		//
-//    		                pointA1 = pointA2;
-//    		            }
-//    		        }
         				TreeSet<YContainer> intersectionSet = computeIntersection(bigBlues,smallBlues); //doesn't matter which direction
         				if(intersectionSet.size() > 0){
+          					System.out.println(endpoint.segment.size());
             				Vctr3D pointA1 = endpoint.segment.getStart();
-            				for(int iSegA=0;iSegA<endpoint.segment.size();iSegA++){
-            					Vctr3D pointA2 = endpoint.segment.get(iSegA);
-            					
-            				}
             				Vctr3D pointA2 = endpoint.segment.get(0);
             				//iterate through all the points in the intersection and do the distance checking
             				for(YContainer checkSeg : intersectionSet){
             					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
             					Vctr3D pointB1 = bPath.getStart();
-                   				for(int iSegB = 0; iSegB < endpoint.segment.size(); iSegB++){
-                   					Vctr3D pointB2 = bPath.get(iSegB-1);
-                   					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
-                   					if(distance < distThreshold){
-                   						System.out.println("woof");
-                   						SegmentedPath pathSecondPartB = bPath.splitPath(iSegB);
-                   						bPath.removeLast();
-                   						offsetPaths.addPath(pathSecondPartB);
-                   					}
-                   				}
+            					try{
+            						Vctr3D pointB2 = bPath.get(0);
+            						float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+            						if(distance < distThreshold){
+            							SegmentedPath pathSecondPartB = bPath.splitPath(0);
+            							bPath.removeLast();
+            							offsetPaths.addPath(pathSecondPartB);
+            						}
+            					}catch(IndexOutOfBoundsException e){
+            						//do nothing, just make sure we don't crash
+            						continue;
+            					}
+                   				
             				}
         				}
 
@@ -549,71 +516,28 @@ public class SegmentedPaths {
         				//so do an intersection
         				TreeSet<YContainer> intersectionSet = computeIntersection(bigBlacks,smallBlacks); //doesn't matter which direction
         				if(intersectionSet.size() > 0){
-        					System.out.println("arf");
         					//this is where it gets awkward. point B is now the blues, which is endpoint
-//        			        for ( SegmentedPath pathA  : paths ) {
-//        		            Vctr3D pointA1 = pathA.getStart();
-//        		            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
-//        		                Vctr3D pointA2 = pathA.get(iSegmentA);
-        		//
-        		//
-//        		                // For each segment of the outer loop (path), iterate through all segments of offset paths
-//        		                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
-//        		                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
-//        		                    Vctr3D pointB1 = pathB.getStart();
-//        		                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
-//        		                        Vctr3D pointB2 = pathB.get(iSegmentB);
-        		//
-        		//
-//        		                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
-//        		                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
-//        		                        if ( distance < distThreshold ) { 
-//        		                            // Remove segment in the offset paths
-//        		                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
-//        		                            pathB.removeLast();
-//        		                            offsetPaths.addPath(pathSecondPartB);
-//        		                        }
-        		//
-        		//
-//        		                        pointB1 = pointB2;
-//        		                    }
-//        		                }
-        		//
-        		//
-//        		                pointA1 = pointA2;
-//        		            }
-//        		        }
             				Vctr3D pointB1 = endpoint.segment.getStart();
-            				for(int iSegB = 0; iSegB < endpoint.segment.size(); iSegB++){
-            					Vctr3D pointB2 = endpoint.segment.get(iSegB-1);
-            					//iterate through all the points in the intersection and do the distance checking
-                				for(YContainer checkSeg : bigBlacks){
+            				try{
+            					Vctr3D pointB2 = endpoint.segment.get(0);
+            					for(YContainer checkSeg : intersectionSet){
                 					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
                 					Vctr3D pointA1 = bPath.getStart();
-                					Vctr3D pointA2 = bPath.get(0);
-                					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
-                					if(distance < distThreshold){
-                						System.out.println("woof");
-                						SegmentedPath pathSecondPartB = bPath.splitPath(iSegB);
-                						bPath.removeLast();
-                						offsetPaths.addPath(pathSecondPartB);
+                					try{
+                						Vctr3D pointA2 = bPath.get(0);
+                						float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+                						if(distance < distThreshold){
+                							System.out.println("woof");
+                							SegmentedPath pathSecondPartB = bPath.splitPath(0);
+                							bPath.removeLast();
+                							offsetPaths.addPath(pathSecondPartB);
+                						}
+                					}catch(IndexOutOfBoundsException e){
+                						continue;
                 					}
-                				}
-                				pointB1 = pointB2;
-            				}
-            				Vctr3D pointB2 = endpoint.segment.get(0);
-            				//iterate through all the points in the intersection and do the distance checking
-            				for(YContainer checkSeg : bigBlacks){
-            					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
-            					Vctr3D pointA1 = bPath.getStart();
-            					Vctr3D pointA2 = bPath.get(0);
-            					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
-            					if(distance < distThreshold){
-            						System.out.println("woof");
-            						SegmentedPath pathSecondPartB = bPath.splitPath(0);
-            						bPath.removeLast();
-            						offsetPaths.addPath(pathSecondPartB);
             					}
+            				}catch(IndexOutOfBoundsException e){
+            					continue;
             				}
         				}
 

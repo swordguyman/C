@@ -58,8 +58,13 @@ public class Segment implements Comparable<Segment>{
 		
 		//get the points for each of the two segments
 		Vctr3D pointA1 = lineA.getStart();
-		Vctr3D pointA2 = lineA.get(0);
-		float slope0 = (pointA2.y - pointA1.y) / (pointA2.x - pointA1.x);
+		float slope0 = 0;
+		for(int i = 0; i < segment.size(); i++){
+			Vctr3D pointA2 = lineA.get(i);
+			slope0 = (pointA2.y - pointA1.y) / (pointA2.x - pointA1.x);
+			pointA1 = pointA2;
+		}
+
 		return slope0;
 	}
 	
