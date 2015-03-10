@@ -21,27 +21,18 @@ public class SweepLineComparator implements Comparator<Segment>{
 		
 		if(current_y == other_y){
 			//we're in trouble. this is why we include paths - sort by slope. 
-			SegmentedPath lineA = a.segment;
-			SegmentedPath lineB = b.segment;
+			float slope0 = a.getSlope();
+			float slope1 = b.getSlope();
 			
-			//get the points for each of the two segments
-			Vctr3D pointA1 = lineA.getStart();
-			Vctr3D pointA2 = lineA.get(0);
-			float slope0 = (pointA2.y - pointA1.y) / (pointA2.x - pointA1.x);
-			
-			Vctr3D pointB1 = lineB.getStart();
-			Vctr3D pointB2 = lineB.get(0);
-			float slope1 = (pointB2.y - pointB1.y) / (pointB2.x - pointB1.x);
-			
-			if(slope0 < slope1)
+			if(slope0 > slope1)
 				return 1;
-			else if(slope0 > slope1)
+			else if(slope0 < slope1)
 				return -1;
 			else
 				return 0; //We should never get here, but include it for safety.
 		}
 		
-		else if(current_y < other_y){
+		else if(current_y > other_y){
 			return 1; //reverse so that the largest y value at x is at index 0
 		}
 		else{

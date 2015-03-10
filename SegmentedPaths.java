@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Comparator;
+import java.util.NavigableSet;
 import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
@@ -174,7 +176,7 @@ public class SegmentedPaths {
     }
     
     class SegmentSort implements Comparator<Segment>{
-
+    	
     	@Override
     	public int compare(Segment arg0, Segment arg1) {
     		if(arg0.endpoint.x == arg1.endpoint.x){
@@ -218,98 +220,74 @@ public class SegmentedPaths {
         
 
         // INDIVIDUAL ASSIGNMENT TARGET ZONE START ****************************************************************************
-        
-//        class SegmentSort implements Comparator<Segment>{
-//
-//        	@Override
-//        	public int compare(Segment arg0, Segment arg1) {
-//        		if(arg0.endpoint.x == arg1.endpoint.x){
-//        			if(arg0.endpoint.y < arg1.endpoint.y){
-//        				return -1;
-//        			}
-//        			else if(arg0.endpoint.y > arg1.endpoint.y){
-//        				return 1;
-//        			}
-//        			else{
-//        				return 0;
-//        			}
-//        		}
-//        		else if (arg0.endpoint.x < arg1.endpoint.x){
-//        			return -1;
-//        		}
-//        		else{
-//        			return 1;
-//        		}
-//        	}
-//        }
           
         
         //Breaking up the segments into two parts: the left endpoint and right endpoint.
         //Initialize event queue of these endpoints.
         //Sort all endpoints by x from left to right(ascending). Break ties by comparing y values from bottom to up.
-        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(paths.size(), new SegmentSort());
-        
-        for(int i = 0; i < paths.size(); i++){
-        	SegmentedPath path = paths.get(i);
-        	
-        	Segment s1 = new Segment(path, path.getStart(), true, i, false);
-            Segment s2 = new Segment(path, path.get(0), false, i, false);
-            
-        	if(path.getStart().x >= path.get(0).x){
-        		s1 = new Segment(path, path.get(0), true, i, false);
-            	s2 = new Segment(path, path.getStart(), false, i, false);
-        	}
-
-        	sort_segments.add(s1);
-        	sort_segments.add(s2);
-        }
-        
-        //Create list of active segments that are to be compared to each other.
-        //We are in fact storing the starting point of a segment, but this works just as well.
-        ArrayList<Segment> activeSegments = new ArrayList<>(paths.size());
-        
-        for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
-        	if(endpoint.isLeft){ //Start of segment
-        		activeSegments.add(endpoint);
-        		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x
-        		
-        		int top = 0;
-        		int bottom = 0;
-        		int index = activeSegments.indexOf(endpoint);
-        		
-        		if(activeSegments.size() == 1){ //No other active segment to compare to.
-        			continue;
-        		}
-        		else if(index == 0){ //If current segment is at the top, only need to compare it to the bottom.
-        			bottom = index + 1;
-        			Segment bottom_point = activeSegments.get(bottom);
-        			intersectionPoints(endpoint, bottom_point, sort_segments);
-        		}
-        		else if(index == activeSegments.size()-1){ //If current segment is at the bottom, etc.
-        			top = index - 1;
-        			Segment top_point = activeSegments.get(top);
-        			intersectionPoints(endpoint, top_point, sort_segments);
-        		}
-        		else{ //Compare to both top and bottom.
-        			top = index - 1;
-        			bottom = index + 1;
-        			Segment top_point = activeSegments.get(top);
-        			Segment bottom_point = activeSegments.get(bottom);
-        			intersectionPoints(endpoint, top_point, sort_segments);
-        			intersectionPoints(endpoint, bottom_point, sort_segments);
-        		}
-        		
-        	}
-        	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
-        		
-        		for(Segment other : activeSegments){ //Iterate through active segments
-        			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
-        				activeSegments.remove(other);
-        				break;
-        			}
-        		}
-        	}
-        }  
+//        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(paths.size(), new SegmentSort());
+//        
+//        for(int i = 0; i < paths.size(); i++){
+//        	SegmentedPath path = paths.get(i);
+//        	
+//        	Segment s1 = new Segment(path, path.getStart(), true, i, false);
+//            Segment s2 = new Segment(path, path.get(0), false, i, false);
+//            
+//        	if(path.getStart().x >= path.get(0).x){
+//        		s1 = new Segment(path, path.get(0), true, i, false);
+//            	s2 = new Segment(path, path.getStart(), false, i, false);
+//        	}
+//
+//        	sort_segments.add(s1);
+//        	sort_segments.add(s2);
+//        }
+//        
+//        //Create list of active segments that are to be compared to each other.
+//        //We are in fact storing the starting point of a segment, but this works just as well.
+//        ArrayList<Segment> activeSegments = new ArrayList<>(paths.size());
+//        
+//        for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
+//        	if(endpoint.isLeft){ //Start of segment
+//        		activeSegments.add(endpoint);
+//        		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x, no offset
+//        		
+//        		int top = 0;
+//        		int bottom = 0;
+//        		int index = activeSegments.indexOf(endpoint);
+//        		
+//        		if(activeSegments.size() == 1){ //No other active segment to compare to.
+//        			continue;
+//        		}
+//        		else if(index == 0){ //If current segment is at the top, only need to compare it to the bottom.
+//        			bottom = index + 1;
+//        			Segment bottom_point = activeSegments.get(bottom);
+//        			intersectionPoints(endpoint, bottom_point, sort_segments);
+//        		}
+//        		else if(index == activeSegments.size()-1){ //If current segment is at the bottom, etc.
+//        			top = index - 1;
+//        			Segment top_point = activeSegments.get(top);
+//        			intersectionPoints(endpoint, top_point, sort_segments);
+//        		}
+//        		else{ //Compare to both top and bottom.
+//        			top = index - 1;
+//        			bottom = index + 1;
+//        			Segment top_point = activeSegments.get(top);
+//        			Segment bottom_point = activeSegments.get(bottom);
+//        			intersectionPoints(endpoint, top_point, sort_segments);
+//        			intersectionPoints(endpoint, bottom_point, sort_segments);
+//        		}
+//        		
+//        	}
+//        	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
+//        		
+//        		for(Segment other : activeSegments){ //Iterate through active segments
+//        			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
+//        				activeSegments.remove(other);
+//        				break;
+//        			}
+//        		}
+//        	}
+//        }  
 
         // INDIVIDUAL ASSIGNMENT TARGET ZONE END ******************************************************************************
 
@@ -321,7 +299,7 @@ public class SegmentedPaths {
         
         
         
-/*
+
         // Iterate through all the segments (that is the first two loops)
         
         for ( int iPathA = 0; iPathA < paths.size(); iPathA++ ) {
@@ -344,7 +322,7 @@ public class SegmentedPaths {
                 }
             }
         }
-  */
+
         
         // Remove segments that need to be deleted
         for ( int iPath = 0; iPath < paths.size(); iPath++ ) {
@@ -397,12 +375,61 @@ public class SegmentedPaths {
         }
     }
 
+    void checkStage3BlackSegment(Segment endpoint,YComparator comp,TreeSet<Segment> topBlues,
+    		TreeSet<Segment> bottomBlues,float distThreshold,SegmentedPaths offsetPaths){
+    	//does the "check black segment against all blue segments" bit 
+    	//for stage 3 = takes a single black segment as input
+		//first, get both halves of the segment
+		Segment otherEnd = endpoint.getOtherEndpoint();
+		//now get the min and the max
+		Segment minSeg = comp.getMinY(endpoint,otherEnd);
+		Segment maxSeg = comp.getMaxY(endpoint,otherEnd);
+		//now that we have min and max, we do the following comparisons:
+		//maxY(blue) > minY(black); minY(blue) < maxY(black)
+		//so check the max blue set, for elements greater than min black
+		NavigableSet<Segment> aboveMin = topBlues.tailSet(minSeg,false);
+
+		NavigableSet<Segment> belowMax = bottomBlues.headSet(maxSeg, false);
+		if(aboveMin.size() > 0 && belowMax.size() > 0){
+			//if they are both non-empty, get the intersection
+			aboveMin.retainAll(belowMax); //we can't return the intersection to a new Set, this modifies the current set
+			//that's java's problem, not mine. However it's a view of the set, so it doesn't modify the original Set,
+			//thankfully
+			if(aboveMin.size() > 0){
+				//if we have an intersection, then we need to check the points
+				Vctr3D pointA1 = endpoint.segment.getStart();
+				Vctr3D pointA2 = endpoint.segment.get(0);
+				//iterate through all the points in the intersection and do the distance checking
+				for(Segment checkSeg : aboveMin){
+					Vctr3D pointB1 = checkSeg.segment.getStart();
+					Vctr3D pointB2 = checkSeg.segment.get(0);
+					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+					if(distance < distThreshold){
+						System.out.println("woof");
+						SegmentedPath pathSecondPartB = checkSeg.segment.splitPath(checkSeg.index);
+						checkSeg.segment.removeLast();
+						offsetPaths.addPath(pathSecondPartB);
+					}
+				}
+			}
+		}
+    }
+    
     // Remove all segments from offsetPaths when within offset from this.paths
     void offsetStage3(SegmentedPaths offsetPaths, float offset) { 
         
         float distThreshold = (1-0.001f)*offset - 0.00001f;
         
-        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort());
+        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort()); //this sorts by X
+        
+        //now declare the four sets we will use to check against; we will add to these while we add to the priorityqueue
+        //the tops are sorted by maxY between starting and ending point of the segment, and the bottoms are sorted
+        //by minY between starting and ending point of the segment.
+        //The sort means that we can do the check for maxY(blue)  > minY(black) && minY(blue) < maxY(black) per-segment, easily.
+        //there's no harm in including the offset variable for both sets, because it only applies to blue segments
+        TreeSet<Segment> blacks = new TreeSet<>(new YComparator(offset));
+        TreeSet<Segment> topBlues = new TreeSet<>(new YComparator(offset));
+        TreeSet<Segment> bottomBlues = new TreeSet<>(new YComparator(offset));
         
         //Add all the black segments to the priority queue
         for(int i = 0; i < paths.size(); i++){
@@ -415,7 +442,7 @@ public class SegmentedPaths {
         		s1 = new Segment(path, path.get(0), true, i, true);
             	s2 = new Segment(path, path.getStart(), false, i, true);
         	}
-
+        	//add to priority queue
         	sort_segments.add(s1);
         	sort_segments.add(s2);
         }
@@ -430,44 +457,61 @@ public class SegmentedPaths {
         		s1 = new Segment(path, path.get(0), true, j, false);
             	s2 = new Segment(path, path.getStart(), false, j, false);
         	}
-
+        	//repeat for the blues, but since our comparator is different, offsets are included
+        	//the Comparator should take care of the offset issues since it only checks by offset when it's a blue segment
         	sort_segments.add(s1);
         	sort_segments.add(s2);
         }
 
-        // Iterate through all the segments (that is the first two loops)
-        for ( SegmentedPath pathA  : paths ) {
-            Vctr3D pointA1 = pathA.getStart();
-            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
-                Vctr3D pointA2 = pathA.get(iSegmentA);
-
-
-                // For each segment of the outer loop (path), iterate through all segments of offset paths
-                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
-                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
-                    Vctr3D pointB1 = pathB.getStart();
-                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
-                        Vctr3D pointB2 = pathB.get(iSegmentB);
-
-
-                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
-                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
-                        if ( distance < distThreshold ) { 
-                            // Remove segment in the offset paths
-                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
-                            pathB.removeLast();
-                            offsetPaths.addPath(pathSecondPartB);
-                        }
-
-
-                        pointB1 = pointB2;
-                    }
-                }
-
-
-                pointA1 = pointA2;
-            }
+        //Iterate through all the segments in our queue
+        YComparator comp = new YComparator(0); //used to get min and max segments
+        for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
+        	if(endpoint.isBlack){
+        		//if it's black, there are two cases
+        		//either it's a left endpoint, in which case we must check it against everything in the blue lists
+        		//and keep it in our black list for checks later
+        		//or it's a black endpoint, in which case we've already checked for the segment in every case, so we remove it
+        		if(endpoint.isLeft){
+        			//first, get both halves of the segment
+        			checkStage3BlackSegment(endpoint,comp,topBlues,bottomBlues,distThreshold,offsetPaths);
+        			blacks.add(endpoint);
+        		}else{
+            		for(Segment other : blacks){ //Iterate through active segments
+            			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
+            				blacks.remove(other);
+            				break;
+            			}
+            		}
+        		}
+        	}else{
+        		//endpoint is blue
+        		if(endpoint.isLeft){
+        			//get min and max, add to the lists
+        			Segment otherEnd = endpoint.getOtherEndpoint();
+        			//now get the min and the max
+        			Segment minSeg = comp.getMinY(endpoint,otherEnd);
+        			Segment maxSeg = comp.getMaxY(endpoint,otherEnd);
+        			bottomBlues.add(minSeg);
+        			topBlues.add(maxSeg);
+        			for(Segment black : blacks){
+        				//max and min are gotten in checkStage3BlackSegment so we don't have to worry
+        				checkStage3BlackSegment(black,comp,topBlues,bottomBlues,distThreshold,offsetPaths);
+        				//and we're done
+        			}
+        		}else{
+        			//remove it because we already checked for it when we checked Left Blue
+            		for(Segment other : topBlues){ //Iterate through active segments
+            			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
+            				topBlues.remove(other);
+            				bottomBlues.remove(other);
+            				break;
+            			}
+            		}
+        		}
+        	}
         }
+        
+
     }
     
     void displayPaths(Group path2D, Color color) {
@@ -494,6 +538,44 @@ public class SegmentedPaths {
             path2D.getChildren().add(pathDraw);
         }
     }
+    
+    void stage3_old(){
+        // Iterate through all the segments (that is the first two loops)
+//        for ( SegmentedPath pathA  : paths ) {
+//            Vctr3D pointA1 = pathA.getStart();
+//            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
+//                Vctr3D pointA2 = pathA.get(iSegmentA);
+//
+//
+//                // For each segment of the outer loop (path), iterate through all segments of offset paths
+//                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
+//                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
+//                    Vctr3D pointB1 = pathB.getStart();
+//                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
+//                        Vctr3D pointB2 = pathB.get(iSegmentB);
+//
+//
+//                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
+//                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
+//                        if ( distance < distThreshold ) { 
+//                            // Remove segment in the offset paths
+//                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
+//                            pathB.removeLast();
+//                            offsetPaths.addPath(pathSecondPartB);
+//                        }
+//
+//
+//                        pointB1 = pointB2;
+//                    }
+//                }
+//
+//
+//                pointA1 = pointA2;
+//            }
+//        }
+    }
+    
+
     
     void combineSegmentPaths() {
         for ( int iPathA = 0; iPathA < paths.size(); iPathA++ ) {

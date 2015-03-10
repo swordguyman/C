@@ -51,4 +51,19 @@ public class Segment implements Comparable<Segment>{
 		}
 	}
 	
+	
+	float getSlope(){
+		//gets the slope of this segment
+		SegmentedPath lineA = segment;
+		
+		//get the points for each of the two segments
+		Vctr3D pointA1 = lineA.getStart();
+		Vctr3D pointA2 = lineA.get(0);
+		float slope0 = (pointA2.y - pointA1.y) / (pointA2.x - pointA1.x);
+		return slope0;
+	}
+	
+	Segment getOtherEndpoint(){
+		return new Segment(segment,endpoint,isLeft,index,isBlack);
+	}
 }
