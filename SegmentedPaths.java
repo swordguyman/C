@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.TreeSet;
 
 import javafx.scene.Group;
@@ -374,45 +375,19 @@ public class SegmentedPaths {
             pointA1.y = intersect[1];
         }
     }
-
-    void checkStage3BlackSegment(Segment endpoint,YComparator comp,TreeSet<Segment> topBlues,
-    		TreeSet<Segment> bottomBlues,float distThreshold,SegmentedPaths offsetPaths){
-    	//does the "check black segment against all blue segments" bit 
-    	//for stage 3 = takes a single black segment as input
-		//first, get both halves of the segment
-		Segment otherEnd = endpoint.getOtherEndpoint();
-		//now get the min and the max
-		Segment minSeg = comp.getMinY(endpoint,otherEnd);
-		Segment maxSeg = comp.getMaxY(endpoint,otherEnd);
-		//now that we have min and max, we do the following comparisons:
-		//maxY(blue) > minY(black); minY(blue) < maxY(black)
-		//so check the max blue set, for elements greater than min black
-		NavigableSet<Segment> aboveMin = topBlues.tailSet(minSeg,false);
-
-		NavigableSet<Segment> belowMax = bottomBlues.headSet(maxSeg, false);
-		if(aboveMin.size() > 0 && belowMax.size() > 0){
-			//if they are both non-empty, get the intersection
-			aboveMin.retainAll(belowMax); //we can't return the intersection to a new Set, this modifies the current set
-			//that's java's problem, not mine. However it's a view of the set, so it doesn't modify the original Set,
-			//thankfully
-			if(aboveMin.size() > 0){
-				//if we have an intersection, then we need to check the points
-				Vctr3D pointA1 = endpoint.segment.getStart();
-				Vctr3D pointA2 = endpoint.segment.get(0);
-				//iterate through all the points in the intersection and do the distance checking
-				for(Segment checkSeg : aboveMin){
-					Vctr3D pointB1 = checkSeg.segment.getStart();
-					Vctr3D pointB2 = checkSeg.segment.get(0);
-					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
-					if(distance < distThreshold){
-						System.out.println("woof");
-						SegmentedPath pathSecondPartB = checkSeg.segment.splitPath(checkSeg.index);
-						checkSeg.segment.removeLast();
-						offsetPaths.addPath(pathSecondPartB);
-					}
-				}
-			}
-		}
+    
+    TreeSet<YContainer> computeIntersection(Set<YContainer> a, Set<YContainer> b){
+    	//ok, so Java has no intersection method that doesn't modify the original set
+    	//this sucks, so I'm going to do it differently
+    	TreeSet<YContainer> returnSet = new TreeSet<>(new YComparator()); //we need TreeSets in the end anyway
+    	for(YContainer element : a){
+    		for(YContainer check : b){
+    			if(element.index == check.index){
+    				returnSet.add(element);
+    			}
+    		}
+    	}
+    	return returnSet;
     }
     
     // Remove all segments from offsetPaths when within offset from this.paths
@@ -423,13 +398,10 @@ public class SegmentedPaths {
         PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort()); //this sorts by X
         
         //now declare the four sets we will use to check against; we will add to these while we add to the priorityqueue
-        //the tops are sorted by maxY between starting and ending point of the segment, and the bottoms are sorted
-        //by minY between starting and ending point of the segment.
-        //The sort means that we can do the check for maxY(blue)  > minY(black) && minY(blue) < maxY(black) per-segment, easily.
-        //there's no harm in including the offset variable for both sets, because it only applies to blue segments
-        TreeSet<Segment> blacks = new TreeSet<>(new YComparator(offset));
-        TreeSet<Segment> topBlues = new TreeSet<>(new YComparator(offset));
-        TreeSet<Segment> bottomBlues = new TreeSet<>(new YComparator(offset));
+        TreeSet<YContainer> topBlacks = new TreeSet<>(new YComparator());
+        TreeSet<YContainer> bottomBlacks = new TreeSet<>(new YComparator());
+        TreeSet<YContainer> topBlues = new TreeSet<>(new YComparator());
+        TreeSet<YContainer> bottomBlues = new TreeSet<>(new YComparator());
         
         //Add all the black segments to the priority queue
         for(int i = 0; i < paths.size(); i++){
@@ -464,7 +436,6 @@ public class SegmentedPaths {
         }
 
         //Iterate through all the segments in our queue
-        YComparator comp = new YComparator(0); //used to get min and max segments
         for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
         	if(endpoint.isBlack){
         		//if it's black, there are two cases
@@ -472,13 +443,87 @@ public class SegmentedPaths {
         		//and keep it in our black list for checks later
         		//or it's a black endpoint, in which case we've already checked for the segment in every case, so we remove it
         		if(endpoint.isLeft){
-        			//first, get both halves of the segment
-        			checkStage3BlackSegment(endpoint,comp,topBlues,bottomBlues,distThreshold,offsetPaths);
-        			blacks.add(endpoint);
+        			//if we have this, then get the min and the max of this segment
+        			float minY = endpoint.getMinY();
+        			float maxY = endpoint.getMaxY();
+        			float slope = endpoint.getSlope();
+        			YContainer minPoint = new YContainer(minY,slope,endpoint.index);
+        			YContainer maxPoint = new YContainer(maxY,slope,endpoint.index);
+        			//check it against all blues
+        			//remember the rule - maxY(blue) > minY(black) and minY(blue) < maxY(black)
+        			//get all maxY(blue) bigger than minY(black)
+        			NavigableSet<YContainer> bigBlues = topBlues.tailSet(minPoint,false);
+        			//get all minY(blue) less than maxY(black)
+        			NavigableSet<YContainer> smallBlues = bottomBlues.headSet(maxPoint, false);
+        			if(bigBlues.size() > 0 && smallBlues.size() > 0){
+        				//if they're both non-empty, that means we might have an intersection
+        				//so do an intersection
+//    			        for ( SegmentedPath pathA  : paths ) {
+//    		            Vctr3D pointA1 = pathA.getStart();
+//    		            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
+//    		                Vctr3D pointA2 = pathA.get(iSegmentA);
+    		//
+    		//
+//    		                // For each segment of the outer loop (path), iterate through all segments of offset paths
+//    		                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
+//    		                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
+//    		                    Vctr3D pointB1 = pathB.getStart();
+//    		                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
+//    		                        Vctr3D pointB2 = pathB.get(iSegmentB);
+    		//
+    		//
+//    		                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
+//    		                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
+//    		                        if ( distance < distThreshold ) { 
+//    		                            // Remove segment in the offset paths
+//    		                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
+//    		                            pathB.removeLast();
+//    		                            offsetPaths.addPath(pathSecondPartB);
+//    		                        }
+    		//
+    		//
+//    		                        pointB1 = pointB2;
+//    		                    }
+//    		                }
+    		//
+    		//
+//    		                pointA1 = pointA2;
+//    		            }
+//    		        }
+        				TreeSet<YContainer> intersectionSet = computeIntersection(bigBlues,smallBlues); //doesn't matter which direction
+        				if(intersectionSet.size() > 0){
+            				Vctr3D pointA1 = endpoint.segment.getStart();
+            				for(int iSegA=0;iSegA<endpoint.segment.size();iSegA++){
+            					Vctr3D pointA2 = endpoint.segment.get(iSegA);
+            					
+            				}
+            				Vctr3D pointA2 = endpoint.segment.get(0);
+            				//iterate through all the points in the intersection and do the distance checking
+            				for(YContainer checkSeg : intersectionSet){
+            					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
+            					Vctr3D pointB1 = bPath.getStart();
+                   				for(int iSegB = 0; iSegB < endpoint.segment.size(); iSegB++){
+                   					Vctr3D pointB2 = bPath.get(iSegB-1);
+                   					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+                   					if(distance < distThreshold){
+                   						System.out.println("woof");
+                   						SegmentedPath pathSecondPartB = bPath.splitPath(iSegB);
+                   						bPath.removeLast();
+                   						offsetPaths.addPath(pathSecondPartB);
+                   					}
+                   				}
+            				}
+        				}
+
+        			}
+        			topBlacks.add(maxPoint);
+        			bottomBlacks.add(minPoint);
         		}else{
-            		for(Segment other : blacks){ //Iterate through active segments
-            			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
-            				blacks.remove(other);
+            		for(YContainer other : topBlacks){ //Iterate through active segments
+            			if(endpoint.index == other.index){ //If current segment equals one of the others.
+            				//should be in both since we added it to both...
+            				topBlacks.remove(other);
+            				bottomBlacks.remove(other);
             				break;
             			}
             		}
@@ -486,22 +531,99 @@ public class SegmentedPaths {
         	}else{
         		//endpoint is blue
         		if(endpoint.isLeft){
-        			//get min and max, add to the lists
-        			Segment otherEnd = endpoint.getOtherEndpoint();
-        			//now get the min and the max
-        			Segment minSeg = comp.getMinY(endpoint,otherEnd);
-        			Segment maxSeg = comp.getMaxY(endpoint,otherEnd);
-        			bottomBlues.add(minSeg);
-        			topBlues.add(maxSeg);
-        			for(Segment black : blacks){
-        				//max and min are gotten in checkStage3BlackSegment so we don't have to worry
-        				checkStage3BlackSegment(black,comp,topBlues,bottomBlues,distThreshold,offsetPaths);
-        				//and we're done
+        			//do the same as before, but check it against all the blacks instead
+        			float minY = endpoint.getMinY();
+        			float maxY = endpoint.getMaxY();
+        			float slope = endpoint.getSlope();
+        			YContainer minPoint = new YContainer(minY-offset,slope,endpoint.index);
+        			YContainer maxPoint = new YContainer(maxY+offset,slope,endpoint.index);
+        			//check it against all blues
+        			//remember the rule - maxY(blue) > minY(black) and minY(blue) < maxY(black)
+        			//get all minY(black) less than maxY(blue)
+        			NavigableSet<YContainer> smallBlacks = bottomBlacks.headSet(maxPoint, false);
+        			//get all maxY(black) > minY(blue)
+        			NavigableSet<YContainer> bigBlacks = topBlacks.tailSet(minPoint,false);
+        			//now do the same thing as before, but more carefully
+        			if(bigBlacks.size() > 0 && smallBlacks.size() > 0){
+        				//if they're both non-empty, that means we might have an intersection
+        				//so do an intersection
+        				TreeSet<YContainer> intersectionSet = computeIntersection(bigBlacks,smallBlacks); //doesn't matter which direction
+        				if(intersectionSet.size() > 0){
+        					System.out.println("arf");
+        					//this is where it gets awkward. point B is now the blues, which is endpoint
+//        			        for ( SegmentedPath pathA  : paths ) {
+//        		            Vctr3D pointA1 = pathA.getStart();
+//        		            for (int iSegmentA = 0; iSegmentA < pathA.size(); iSegmentA++ ) {
+//        		                Vctr3D pointA2 = pathA.get(iSegmentA);
+        		//
+        		//
+//        		                // For each segment of the outer loop (path), iterate through all segments of offset paths
+//        		                for ( int iPathB = 0; iPathB < offsetPaths.size(); iPathB++ ) {
+//        		                    SegmentedPath pathB  = offsetPaths.paths.get(iPathB);
+//        		                    Vctr3D pointB1 = pathB.getStart();
+//        		                    for (int iSegmentB = 0; iSegmentB < pathB.size(); iSegmentB++ ) {
+//        		                        Vctr3D pointB2 = pathB.get(iSegmentB);
+        		//
+        		//
+//        		                        // Find segment (pointA1, pointA2) and (pointB1,pointB2) distance
+//        		                        float distance = pointA1.getDistance2D(pointA2, pointB1, pointB2);
+//        		                        if ( distance < distThreshold ) { 
+//        		                            // Remove segment in the offset paths
+//        		                            SegmentedPath pathSecondPartB = pathB.splitPath(iSegmentB); 
+//        		                            pathB.removeLast();
+//        		                            offsetPaths.addPath(pathSecondPartB);
+//        		                        }
+        		//
+        		//
+//        		                        pointB1 = pointB2;
+//        		                    }
+//        		                }
+        		//
+        		//
+//        		                pointA1 = pointA2;
+//        		            }
+//        		        }
+            				Vctr3D pointB1 = endpoint.segment.getStart();
+            				for(int iSegB = 0; iSegB < endpoint.segment.size(); iSegB++){
+            					Vctr3D pointB2 = endpoint.segment.get(iSegB-1);
+            					//iterate through all the points in the intersection and do the distance checking
+                				for(YContainer checkSeg : bigBlacks){
+                					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
+                					Vctr3D pointA1 = bPath.getStart();
+                					Vctr3D pointA2 = bPath.get(0);
+                					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+                					if(distance < distThreshold){
+                						System.out.println("woof");
+                						SegmentedPath pathSecondPartB = bPath.splitPath(iSegB);
+                						bPath.removeLast();
+                						offsetPaths.addPath(pathSecondPartB);
+                					}
+                				}
+                				pointB1 = pointB2;
+            				}
+            				Vctr3D pointB2 = endpoint.segment.get(0);
+            				//iterate through all the points in the intersection and do the distance checking
+            				for(YContainer checkSeg : bigBlacks){
+            					SegmentedPath bPath = offsetPaths.paths.get(checkSeg.index);
+            					Vctr3D pointA1 = bPath.getStart();
+            					Vctr3D pointA2 = bPath.get(0);
+            					float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
+            					if(distance < distThreshold){
+            						System.out.println("woof");
+            						SegmentedPath pathSecondPartB = bPath.splitPath(0);
+            						bPath.removeLast();
+            						offsetPaths.addPath(pathSecondPartB);
+            					}
+            				}
+        				}
+
         			}
+        			topBlues.add(maxPoint);
+        			bottomBlues.add(minPoint);
         		}else{
         			//remove it because we already checked for it when we checked Left Blue
-            		for(Segment other : topBlues){ //Iterate through active segments
-            			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
+            		for(YContainer other : topBlues){ //Iterate through active segments
+            			if(endpoint.index == other.index){ //If current segment equals one of the others.
             				topBlues.remove(other);
             				bottomBlues.remove(other);
             				break;

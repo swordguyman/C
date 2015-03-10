@@ -63,6 +63,25 @@ public class Segment implements Comparable<Segment>{
 		return slope0;
 	}
 	
+	float getMaxY(){
+		//get the maximum Y value of this segment
+		float max = segment.getStart().y;
+		for(int i=0;i<segment.size();i++){
+			float check = segment.get(i).y;
+			if(check > max) max = check;
+		}
+		return max;
+	}
+	
+	float getMinY(){
+		float min = segment.getStart().y;
+		for(int i=0;i<segment.size();i++){
+			float check = segment.get(i).y;
+			if(check < min) min = check;
+		}
+		return min;
+	}
+	
 	Segment getOtherEndpoint(){
 		return new Segment(segment,endpoint,isLeft,index,isBlack);
 	}
