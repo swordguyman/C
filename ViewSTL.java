@@ -54,6 +54,7 @@ public class ViewSTL {
   private Controller controller;
   long sumOfDurations       = 0;
   long sumOfDurationsStage2 = 0;
+  long sumOfDurationsStage3 = 0;
     
   private static final String MESH_DIRECTORY =
     //"C:/Users/Gary/workspaceEclipse4.4/downloads/stlFiles/";
@@ -734,7 +735,9 @@ public class ViewSTL {
       long   endTimeStage2 = System.nanoTime(); // Finish the timing for stage 2
 
       // Find and remove segments within offset of path
+      long startTimeStage3 = System.nanoTime(); //Start timing for stage 3
       crossSection.offsetStage3(offsetPaths, offset); 
+      long endTimeStage3 = System.nanoTime(); //Finish timing for stage 3
 
       // Skipping stage 4. Not important for this exercise
 
@@ -751,6 +754,8 @@ public class ViewSTL {
       sumOfDurations += duration;
       long durationStage2 = (endTimeStage2 - startTimeStage2);  //divide by 1000000 to get milliseconds.
       sumOfDurationsStage2 += durationStage2;
+      long durationStage3 = (endTimeStage3 - startTimeStage3); //divide by 1000000 to get milliseconds.
+      sumOfDurationsStage3 += durationStage3;
 
       return offsetPaths;
   }
@@ -807,8 +812,9 @@ public class ViewSTL {
       offsetPaths19.displayPaths(path2D, Color.BLUE  );
 
       System.out.println("Calculations stage 2: " + ((double)(sumOfDurationsStage2)/1000000.0) + " milliseconds");
+      System.out.println("Calculations stage 3: " + ((double)(sumOfDurationsStage3)/1000000.0) + " milliseconds");
       System.out.println("Calculations total:   " + ((double)(sumOfDurations      )/1000000.0) + " milliseconds");
-      sumOfDurationsStage2 = sumOfDurations = 0;
+      sumOfDurationsStage2 = sumOfDurations = sumOfDurationsStage3 = 0;
   }
 
   void newStage2D(  ) {

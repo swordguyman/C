@@ -244,11 +244,14 @@ public class SegmentedPaths {
         
         //Create list of active segments that are to be compared to each other.
         //We are in fact storing the starting point of a segment, but this works just as well.
-        ArrayList<Segment> activeSegments = new ArrayList<>(paths.size());
+        
+        //ArrayList<Segment> activeSegments = new ArrayList<Segment>(paths.size());
+        TreeSet<Segment> activeSegments = new TreeSet<Segment>(new SweepLineComparator(paths));
         
         for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
         	if(endpoint.isLeft){ //Start of segment
         		activeSegments.add(endpoint);
+        		/*
         		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x, no offset
         		
         		int top = 0;
@@ -276,8 +279,17 @@ public class SegmentedPaths {
         			intersectionPoints(endpoint, top_point, sort_segments);
         			intersectionPoints(endpoint, bottom_point, sort_segments);
         		}
+        		*/
+        		
+        		
+        		Segment top = activeSegments.higher(endpoint);
+        		Segment bottom = activeSegments.lower(endpoint);
+        		
+        		if(top != null){ intersectionPoints(endpoint, top, sort_segments);}
+        		if(bottom != null){ intersectionPoints(endpoint, bottom, sort_segments);}
         		
         	}
+        	
         	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
         		
         		for(Segment other : activeSegments){ //Iterate through active segments
@@ -323,7 +335,6 @@ public class SegmentedPaths {
             }
         }
 
-        
         // Remove segments that need to be deleted
         for ( int iPath = 0; iPath < paths.size(); iPath++ ) {
             SegmentedPath path  = paths.get(iPath);
@@ -437,7 +448,7 @@ public class SegmentedPaths {
         
         
         /////////////////////ORIGINAL NAIVE METHOD STAGE 3/////////////////////
-
+    	/*
         float distThreshold = (1-0.001f)*offset - 0.00001f;
     	
         // Iterate through all the segments (that is the first two loops)
@@ -471,7 +482,7 @@ public class SegmentedPaths {
                 pointA1 = pointA2;
             }
         }
-        
+        */
         
         
         
@@ -480,7 +491,7 @@ public class SegmentedPaths {
         
         
         /////////////////////IMPROVED STAGE 3/////////////////////
-        /*
+        
         float distThreshold = (1-0.001f)*offset - 0.00001f;
         
         PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort()); //this sorts by X
@@ -573,7 +584,7 @@ public class SegmentedPaths {
         		}
         	}
         }
-        */
+        
         
         
         
