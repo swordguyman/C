@@ -159,18 +159,42 @@ public class SegmentedPaths {
             for(int i = count1; i < count2; i++){ //Add these new segments back to event queue
             	SegmentedPath path = paths.get(i);
             	
-            	Segment s1 = new Segment(path, path.getStart(), true, i);
-                Segment s2 = new Segment(path, path.get(0), false, i);
+            	Segment s1 = new Segment(path, path.getStart(), true, i, false);
+                Segment s2 = new Segment(path, path.get(0), false, i, false);
                 
             	if(path.getStart().x >= path.get(0).x){
-            		s1 = new Segment(path, path.get(0), true, i);
-                	s2 = new Segment(path, path.getStart(), false, i);
+            		s1 = new Segment(path, path.get(0), true, i, false);
+                	s2 = new Segment(path, path.getStart(), false, i, false);
             	}
 
             	c.add(s1);
             	c.add(s2);
             }
         }
+    }
+    
+    class SegmentSort implements Comparator<Segment>{
+
+    	@Override
+    	public int compare(Segment arg0, Segment arg1) {
+    		if(arg0.endpoint.x == arg1.endpoint.x){
+    			if(arg0.endpoint.y < arg1.endpoint.y){
+    				return -1;
+    			}
+    			else if(arg0.endpoint.y > arg1.endpoint.y){
+    				return 1;
+    			}
+    			else{
+    				return 0;
+    			}
+    		}
+    		else if (arg0.endpoint.x < arg1.endpoint.x){
+    			return -1;
+    		}
+    		else{
+    			return 1;
+    		}
+    	}
     }
     
     void offsetStage2() { // Find and remove intersections between offset segments
@@ -195,29 +219,29 @@ public class SegmentedPaths {
 
         // INDIVIDUAL ASSIGNMENT TARGET ZONE START ****************************************************************************
         
-        class SegmentSort implements Comparator<Segment>{
-
-        	@Override
-        	public int compare(Segment arg0, Segment arg1) {
-        		if(arg0.endpoint.x == arg1.endpoint.x){
-        			if(arg0.endpoint.y < arg1.endpoint.y){
-        				return -1;
-        			}
-        			else if(arg0.endpoint.y > arg1.endpoint.y){
-        				return 1;
-        			}
-        			else{
-        				return 0;
-        			}
-        		}
-        		else if (arg0.endpoint.x < arg1.endpoint.x){
-        			return -1;
-        		}
-        		else{
-        			return 1;
-        		}
-        	}
-        }
+//        class SegmentSort implements Comparator<Segment>{
+//
+//        	@Override
+//        	public int compare(Segment arg0, Segment arg1) {
+//        		if(arg0.endpoint.x == arg1.endpoint.x){
+//        			if(arg0.endpoint.y < arg1.endpoint.y){
+//        				return -1;
+//        			}
+//        			else if(arg0.endpoint.y > arg1.endpoint.y){
+//        				return 1;
+//        			}
+//        			else{
+//        				return 0;
+//        			}
+//        		}
+//        		else if (arg0.endpoint.x < arg1.endpoint.x){
+//        			return -1;
+//        		}
+//        		else{
+//        			return 1;
+//        		}
+//        	}
+//        }
           
         
         //Breaking up the segments into two parts: the left endpoint and right endpoint.
@@ -228,12 +252,12 @@ public class SegmentedPaths {
         for(int i = 0; i < paths.size(); i++){
         	SegmentedPath path = paths.get(i);
         	
-        	Segment s1 = new Segment(path, path.getStart(), true, i);
-            Segment s2 = new Segment(path, path.get(0), false, i);
+        	Segment s1 = new Segment(path, path.getStart(), true, i, false);
+            Segment s2 = new Segment(path, path.get(0), false, i, false);
             
         	if(path.getStart().x >= path.get(0).x){
-        		s1 = new Segment(path, path.get(0), true, i);
-            	s2 = new Segment(path, path.getStart(), false, i);
+        		s1 = new Segment(path, path.get(0), true, i, false);
+            	s2 = new Segment(path, path.getStart(), false, i, false);
         	}
 
         	sort_segments.add(s1);
@@ -377,6 +401,39 @@ public class SegmentedPaths {
     void offsetStage3(SegmentedPaths offsetPaths, float offset) { 
         
         float distThreshold = (1-0.001f)*offset - 0.00001f;
+        
+        PriorityQueue<Segment> sort_segments = new PriorityQueue<Segment>(new SegmentSort());
+        
+        //Add all the black segments to the priority queue
+        for(int i = 0; i < paths.size(); i++){
+        	SegmentedPath path = paths.get(i);
+        	
+        	Segment s1 = new Segment(path, path.getStart(), true, i, true);
+            Segment s2 = new Segment(path, path.get(0), false, i, true);
+            
+        	if(path.getStart().x >= path.get(0).x){
+        		s1 = new Segment(path, path.get(0), true, i, true);
+            	s2 = new Segment(path, path.getStart(), false, i, true);
+        	}
+
+        	sort_segments.add(s1);
+        	sort_segments.add(s2);
+        }
+        
+        for (int j = 0; j < offsetPaths.size(); j++) {
+        	SegmentedPath path = offsetPaths.paths.get(j);
+        	
+        	Segment s1 = new Segment(path, path.getStart(), true, j, false);
+            Segment s2 = new Segment(path, path.get(0), false, j, false);
+            
+        	if(path.getStart().x >= path.get(0).x) {
+        		s1 = new Segment(path, path.get(0), true, j, false);
+            	s2 = new Segment(path, path.getStart(), false, j, false);
+        	}
+
+        	sort_segments.add(s1);
+        	sort_segments.add(s2);
+        }
 
         // Iterate through all the segments (that is the first two loops)
         for ( SegmentedPath pathA  : paths ) {

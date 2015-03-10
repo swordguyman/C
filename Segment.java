@@ -4,13 +4,16 @@ public class Segment implements Comparable<Segment>{
 	SegmentedPath segment;
 	Vctr3D endpoint;
 	boolean isLeft;
+	boolean isBlack; //Is this segment part of the original shapes (black)
+					 //Or is it an offset path (blue)
 	int index; //Index of segment in paths variable in the class SegmentedPaths.
 	
-	Segment(SegmentedPath segment, Vctr3D endpoint, boolean isLeft, int index){
+	Segment(SegmentedPath segment, Vctr3D endpoint, boolean isLeft, int index, boolean isBlack){
 		this.segment = segment;
 		this.endpoint = endpoint;
 		this.isLeft = isLeft;
 		this.index = index;
+		this.isBlack = isBlack;
 	}
 
 	float getYgivenX(float x){
