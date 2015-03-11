@@ -5,12 +5,6 @@ import java.util.Comparator;
 
 public class SweepLineComparator implements Comparator<Segment>{
 	//this class sorts the points so we can use them for the more efficient sweep line (check only above and below)
-	ArrayList<SegmentedPath> paths; //so we can compute slopes...only use in worst case!
-	
-	public SweepLineComparator(ArrayList<SegmentedPath> allpaths){
-		paths = allpaths;
-	}
-	
 	
 	public int compare(Segment a, Segment b){
 		//Idea is to get the y values where the sweep line is at this.x so we can sort activeSegments accordingly.

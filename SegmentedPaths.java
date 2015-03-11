@@ -247,60 +247,60 @@ public class SegmentedPaths {
         //We are in fact storing the starting point of a segment, but this works just as well.
         
         //ArrayList<Segment> activeSegments = new ArrayList<Segment>(paths.size());
-        TreeSet<Segment> activeSegments = new TreeSet<Segment>(new SweepLineComparator(paths));
-        
-        for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
-        	if(endpoint.isLeft){ //Start of segment
-        		activeSegments.add(endpoint);
-        		/*
-        		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x, no offset
-        		
-        		int top = 0;
-        		int bottom = 0;
-        		int index = activeSegments.indexOf(endpoint);
-        		
-        		if(activeSegments.size() == 1){ //No other active segment to compare to.
-        			continue;
-        		}
-        		else if(index == 0){ //If current segment is at the top, only need to compare it to the bottom.
-        			bottom = index + 1;
-        			Segment bottom_point = activeSegments.get(bottom);
-        			intersectionPoints(endpoint, bottom_point, sort_segments);
-        		}
-        		else if(index == activeSegments.size()-1){ //If current segment is at the bottom, etc.
-        			top = index - 1;
-        			Segment top_point = activeSegments.get(top);
-        			intersectionPoints(endpoint, top_point, sort_segments);
-        		}
-        		else{ //Compare to both top and bottom.
-        			top = index - 1;
-        			bottom = index + 1;
-        			Segment top_point = activeSegments.get(top);
-        			Segment bottom_point = activeSegments.get(bottom);
-        			intersectionPoints(endpoint, top_point, sort_segments);
-        			intersectionPoints(endpoint, bottom_point, sort_segments);
-        		}
-        		*/
-        		
-        		
-        		Segment top = activeSegments.higher(endpoint);
-        		Segment bottom = activeSegments.lower(endpoint);
-        		
-        		if(top != null){ intersectionPoints(endpoint, top, sort_segments);}
-        		if(bottom != null){ intersectionPoints(endpoint, bottom, sort_segments);}
-        		
-        	}
-        	
-        	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
-        		
-        		for(Segment other : activeSegments){ //Iterate through active segments
-        			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
-        				activeSegments.remove(other);
-        				break;
-        			}
-        		}
-        	}
-        }  
+//        TreeSet<Segment> activeSegments = new TreeSet<Segment>(new SweepLineComparator());
+//        
+//        for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
+//        	if(endpoint.isLeft){ //Start of segment
+//        		activeSegments.add(endpoint);
+//        		/*
+//        		Collections.sort(activeSegments, new SweepLineComparator(paths)); //sort by y at given x, no offset
+//        		
+//        		int top = 0;
+//        		int bottom = 0;
+//        		int index = activeSegments.indexOf(endpoint);
+//        		
+//        		if(activeSegments.size() == 1){ //No other active segment to compare to.
+//        			continue;
+//        		}
+//        		else if(index == 0){ //If current segment is at the top, only need to compare it to the bottom.
+//        			bottom = index + 1;
+//        			Segment bottom_point = activeSegments.get(bottom);
+//        			intersectionPoints(endpoint, bottom_point, sort_segments);
+//        		}
+//        		else if(index == activeSegments.size()-1){ //If current segment is at the bottom, etc.
+//        			top = index - 1;
+//        			Segment top_point = activeSegments.get(top);
+//        			intersectionPoints(endpoint, top_point, sort_segments);
+//        		}
+//        		else{ //Compare to both top and bottom.
+//        			top = index - 1;
+//        			bottom = index + 1;
+//        			Segment top_point = activeSegments.get(top);
+//        			Segment bottom_point = activeSegments.get(bottom);
+//        			intersectionPoints(endpoint, top_point, sort_segments);
+//        			intersectionPoints(endpoint, bottom_point, sort_segments);
+//        		}
+//        		*/
+//        		
+//        		
+//        		Segment top = activeSegments.higher(endpoint);
+//        		Segment bottom = activeSegments.lower(endpoint);
+//        		
+//        		if(top != null){ intersectionPoints(endpoint, top, sort_segments);}
+//        		if(bottom != null){ intersectionPoints(endpoint, bottom, sort_segments);}
+//        		
+//        	}
+//        	
+//        	else if(!endpoint.isLeft){ //End of segment. Look for corresponding start of segment. Then delete entire segment.
+//        		
+//        		for(Segment other : activeSegments){ //Iterate through active segments
+//        			if(endpoint.segment == other.segment){ //If current segment equals one of the others.
+//        				activeSegments.remove(other);
+//        				break;
+//        			}
+//        		}
+//        	}
+//        }  
 
         
 
@@ -312,7 +312,7 @@ public class SegmentedPaths {
         
         
         /////////////////////ORIGINAL NAIVE METHOD STAGE 2/////////////////////
-        /*
+        
         // Iterate through all the segments (that is the first two loops)
         
         for ( int iPathA = 0; iPathA < paths.size(); iPathA++ ) {
@@ -347,7 +347,7 @@ public class SegmentedPaths {
                 iPath--; // Note, bad form to modify iterator
             }
         }
-        */
+        
         
         
         
@@ -526,6 +526,7 @@ public class SegmentedPaths {
 
         //Iterate through all the segments in our queue
         for(Segment endpoint = sort_segments.poll(); endpoint!=null; endpoint = sort_segments.poll()){
+        	//System.out.println(topBlacks.size());
         	if(endpoint.isBlack){
         		//if it's black, there are two cases
         		//either it's a left endpoint, in which case we must check it against everything in the blue lists
@@ -549,7 +550,7 @@ public class SegmentedPaths {
         				//so do an intersection
         				TreeSet<YContainer> intersectionSet = computeIntersection(bigBlues,smallBlues); //doesn't matter which direction
         				if(intersectionSet.size() > 0){
-          					System.out.println(endpoint.segment.size());
+          					//System.out.println(endpoint.segment.size());
             				Vctr3D pointA1 = endpoint.segment.getStart();
             				Vctr3D pointA2 = endpoint.segment.get(0);
             				//iterate through all the points in the intersection and do the distance checking
@@ -581,7 +582,6 @@ public class SegmentedPaths {
             				//should be in both since we added it to both...
             				topBlacks.remove(other);
             				bottomBlacks.remove(other);
-            				break;
             			}
             		}
         		}
@@ -617,7 +617,7 @@ public class SegmentedPaths {
                 						Vctr3D pointA2 = bPath.get(0);
                 						float distance = pointA1.getDistance2D(pointA2,pointB1,pointB2);
                 						if(distance < distThreshold){
-                							System.out.println("woof");
+                						//	System.out.println("woof");
                 							SegmentedPath pathSecondPartB = bPath.splitPath(0);
                 							bPath.removeLast();
                 							offsetPaths.addPath(pathSecondPartB);
@@ -636,13 +636,15 @@ public class SegmentedPaths {
         			bottomBlues.add(minPoint);
         		}else{
         			//remove it because we already checked for it when we checked Left Blue
+        			YContainer found = null;
             		for(YContainer other : topBlues){ //Iterate through active segments
             			if(endpoint.index == other.index){ //If current segment equals one of the others.
-            				topBlues.remove(other);
-            				bottomBlues.remove(other);
+            				found = other;
             				break;
             			}
             		}
+            		topBlues.remove(found);
+            		bottomBlues.remove(found);
         		}
         	}
         }
