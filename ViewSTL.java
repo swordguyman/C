@@ -87,6 +87,8 @@ public class ViewSTL {
   private   PointLight   pointLight3;
   private AmbientLight ambientLight ;
 
+  
+  
   ViewSTL() {
       rootMeshRotates = new Group();
       path3D          = new Group();
@@ -191,7 +193,7 @@ public class ViewSTL {
   public void start(Stage primaryStage) {
     this.primaryStage = primaryStage;
     AnchorPane pane = new AnchorPane();
-    
+        
     HBox hBox = new HBox(5); // 5 adds that space between nodes
     ToggleButton    wireFrameButton = new ToggleButton("Wireframe");
     wireFrameButton   .setOnAction( e -> {controller.notifyWireFrameButton(  e );});
@@ -244,6 +246,8 @@ public class ViewSTL {
     primaryStage.setTitle("STL Object Viewer");
     primaryStage.setScene(scene3D);
     primaryStage.show();
+    scene2D.setOnMousePressed( e -> {System.out.println("XY click coord: "+(e.getX()-path2D.getLayoutX())+" "+(e.getY()-path2D.getLayoutY()));});
+
   }
 
   // Transformations applied later in the execution
@@ -811,9 +815,20 @@ public class ViewSTL {
       offsetPaths18.displayPaths(path2D, Color.BLUE  );
       offsetPaths19.displayPaths(path2D, Color.BLUE  );
 
-      System.out.println("Calculations stage 2: " + ((double)(sumOfDurationsStage2)/1000000.0) + " milliseconds");
-      System.out.println("Calculations stage 3: " + ((double)(sumOfDurationsStage3)/1000000.0) + " milliseconds");
-      System.out.println("Calculations total:   " + ((double)(sumOfDurations      )/1000000.0) + " milliseconds");
+      double s2 = ((double)(sumOfDurationsStage2)/1000000.0);
+      double s3 = ((double)(sumOfDurationsStage3)/1000000.0);
+      double sT = ((double)(sumOfDurations      )/1000000.0);
+      double s2naive = 1250; //naive runtime of stage 2
+      double s3naive = 4200; // '' '' of stage 3
+      double sTnaive = 6000; //'' '' of total time
+ 
+      
+      System.out.print("Calculations stage 2: " + s2 + " milliseconds. ");
+      System.out.println("Improvement of " + Math.abs((s2-s2naive)/s2naive)*100 + "% runtime reduction.");
+      System.out.print("Calculations stage 3: " + s3 + " milliseconds. ");
+      //System.out.println("Improvement of " + Math.abs((s3-s3naive)/s3naive)*100 + "% runtime reduction.");
+      System.out.print("Calculations total:   " + sT + " milliseconds. ");
+      System.out.println("Improvement of " + Math.abs((sT-sTnaive)/sTnaive)*100 + "% runtime reduction.");;
       sumOfDurationsStage2 = sumOfDurations = sumOfDurationsStage3 = 0;
   }
 
