@@ -11,8 +11,10 @@ public class YComparator implements Comparator<YContainer> {
 		if(arg0.y == arg1.y){
 			if(arg0.slope > arg1.slope){
 				return 1;
-			}else{
+			}else if(arg0.slope < arg1.slope){
 				return -1;
+			}else{
+				return 0;
 			}
 		}else{
 			if(arg0.y > arg1.y){
