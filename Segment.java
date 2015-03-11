@@ -90,4 +90,9 @@ public class Segment implements Comparable<Segment>{
 	Segment getOtherEndpoint(){
 		return new Segment(segment,endpoint,isLeft,index,isBlack);
 	}
+	
+	@Override
+	public String toString() {
+		return "Endpoint: " + endpoint.print() + "; index: " + index;
+	}
 }
