@@ -577,13 +577,25 @@ public class SegmentedPaths {
         			topBlacks.add(maxPoint);
         			bottomBlacks.add(minPoint);
         		}else{
+        			YContainer foundTop = null;
             		for(YContainer other : topBlacks){ //Iterate through active segments
             			if(endpoint.index == other.index){ //If current segment equals one of the others.
             				//should be in both since we added it to both...
-            				topBlacks.remove(other);
-            				bottomBlacks.remove(other);
+            				foundTop = other;
+            				break;
             			}
             		}
+            		if(foundTop == null) continue;
+    				topBlacks.remove(foundTop);
+    				YContainer foundBottom = null;
+            		for(YContainer other : bottomBlacks){ //Iterate through active segments
+            			if(endpoint.index == other.index){ //If current segment equals one of the others.
+            				//should be in both since we added it to both...
+            				foundBottom = other;
+            				break;
+            			}
+            		}
+    				bottomBlacks.remove(foundBottom);
         		}
         	}else{
         		//endpoint is blue
@@ -636,15 +648,25 @@ public class SegmentedPaths {
         			bottomBlues.add(minPoint);
         		}else{
         			//remove it because we already checked for it when we checked Left Blue
-        			YContainer found = null;
+        			YContainer foundTop = null;
             		for(YContainer other : topBlues){ //Iterate through active segments
             			if(endpoint.index == other.index){ //If current segment equals one of the others.
-            				found = other;
+            				//should be in both since we added it to both...
+            				foundTop = other;
             				break;
             			}
             		}
-            		topBlues.remove(found);
-            		bottomBlues.remove(found);
+            		if(foundTop == null) continue;
+    				topBlues.remove(foundTop);
+    				YContainer foundBottom = null;
+            		for(YContainer other : bottomBlues){ //Iterate through active segments
+            			if(endpoint.index == other.index){ //If current segment equals one of the others.
+            				//should be in both since we added it to both...
+            				foundBottom = other;
+            				break;
+            			}
+            		}
+    				bottomBlues.remove(foundBottom);
         		}
         	}
         }
