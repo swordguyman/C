@@ -474,12 +474,34 @@ public class SegmentedPaths {
         for(int i = 0; i < paths.size(); i++){
         	SegmentedPath path = paths.get(i);
         	
-        	Segment s1 = new Segment(path, path.getStart(), true, i, true);
-            Segment s2 = new Segment(path, path.get(0), false, i, true);
+        	Vctr3D segStart = path.getStart();
+        	Vctr3D segEnd;
+        	Segment s1;
+            Segment s2;
+        	for (int k = 0; k < path.size(); k++) {
+        		segEnd = path.get(k);
+	        	s1 = new Segment(path, segStart, true, i, true);
+	            s2 = new Segment(path, segEnd, false, i, true);
+	            
+	        	if(path.getStart().x >= path.get(0).x){
+	        		s1 = new Segment(path, segEnd, true, i, true);
+	            	s2 = new Segment(path, segStart, false, i, true);
+	        	}
+	        	//add to priority queue
+	        	sort_segments.add(s1);
+	        	sort_segments.add(s2);
+	        	
+	        	segStart = path.get(k);
+        	}
+        	//Adding the last segment in the path, assumed to end at the
+        	//start of the path
+        	segEnd = path.getStart();
+        	s1 = new Segment(path, segStart, true, i, true);
+            s2 = new Segment(path, segEnd, false, i, true);
             
         	if(path.getStart().x >= path.get(0).x){
-        		s1 = new Segment(path, path.get(0), true, i, true);
-            	s2 = new Segment(path, path.getStart(), false, i, true);
+        		s1 = new Segment(path, segEnd, true, i, true);
+            	s2 = new Segment(path, segStart, false, i, true);
         	}
         	//add to priority queue
         	sort_segments.add(s1);
